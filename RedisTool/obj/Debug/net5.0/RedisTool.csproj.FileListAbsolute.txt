@@ -1,0 +1,12 @@
+D:\MyGitHub\RedisTool\RedisTool\bin\Debug\net5.0\RedisTool.deps.json
+D:\MyGitHub\RedisTool\RedisTool\bin\Debug\net5.0\RedisTool.dll
+D:\MyGitHub\RedisTool\RedisTool\bin\Debug\net5.0\ref\RedisTool.dll
+D:\MyGitHub\RedisTool\RedisTool\bin\Debug\net5.0\RedisTool.pdb
+D:\MyGitHub\RedisTool\RedisTool\obj\Debug\net5.0\RedisTool.csprojAssemblyReference.cache
+D:\MyGitHub\RedisTool\RedisTool\obj\Debug\net5.0\RedisTool.GeneratedMSBuildEditorConfig.editorconfig
+D:\MyGitHub\RedisTool\RedisTool\obj\Debug\net5.0\RedisTool.AssemblyInfoInputs.cache
+D:\MyGitHub\RedisTool\RedisTool\obj\Debug\net5.0\RedisTool.AssemblyInfo.cs
+D:\MyGitHub\RedisTool\RedisTool\obj\Debug\net5.0\RedisTool.csproj.CoreCompileInputs.cache
+D:\MyGitHub\RedisTool\RedisTool\obj\Debug\net5.0\RedisTool.dll
+D:\MyGitHub\RedisTool\RedisTool\obj\Debug\net5.0\ref\RedisTool.dll
+D:\MyGitHub\RedisTool\RedisTool\obj\Debug\net5.0\RedisTool.pdb
