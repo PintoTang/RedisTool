@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 using StackExchange.Redis;
 using System;
+using System.Threading;
 
 namespace RedisTool
 {
@@ -69,10 +70,18 @@ namespace RedisTool
         /// </summary>
         /// <param name="key"></param>
         /// <param name="data"></param>
-        public void Insert(string key, object data)
+        public bool Insert(string key, object data)
         {
-            var jsonData = GetJsonData(data, -1, false);
-            database.StringSet(key, jsonData);
+            try
+            {
+                var jsonData = GetJsonData(data, -1, false);
+                database.StringSet(key, jsonData);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         /// <summary>
@@ -81,11 +90,19 @@ namespace RedisTool
         /// <param name="key"></param>
         /// <param name="data"></param>
         /// <param name="cacheTime">过期秒数</param>
-        public void Insert(string key, object data, int cacheTime)
+        public bool Insert(string key, object data, int cacheTime)
         {
-            var timeSpan = TimeSpan.FromSeconds(cacheTime);
-            var jsonData = GetJsonData(data, cacheTime, true);
-            database.StringSet(key, jsonData, timeSpan);
+            try
+            {
+                var timeSpan = TimeSpan.FromSeconds(cacheTime);
+                var jsonData = GetJsonData(data, cacheTime, true);
+                database.StringSet(key, jsonData, timeSpan);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         /// <summary>
@@ -94,12 +111,20 @@ namespace RedisTool
         /// <param name="key"></param>
         /// <param name="data"></param>
         /// <param name="cacheTime">失效时间加个随机值，防止雪崩(即大面积缓存失效)</param>
-        public void Insert(string key, object data, DateTime cacheTime)
+        public bool Insert(string key, object data, DateTime cacheTime)
         {
-            var timeSpan = cacheTime.AddSeconds(new Random().Next(1000)) - DateTime.Now;
-            int expireSeconds = timeSpan.Seconds;
-            var jsonData = GetJsonData(data, expireSeconds, false);
-            database.StringSet(key, jsonData, timeSpan);
+            try
+            {
+                var timeSpan = cacheTime.AddSeconds(new Random().Next(1000)) - DateTime.Now;
+                int expireSeconds = timeSpan.Seconds;
+                var jsonData = GetJsonData(data, expireSeconds, false);
+                database.StringSet(key, jsonData, timeSpan);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         /// <summary>
@@ -108,10 +133,18 @@ namespace RedisTool
         /// <typeparam name="T"></typeparam>
         /// <param name="key"></param>
         /// <param name="data"></param>
-        public void Insert<T>(string key, T data)
+        public bool Insert<T>(string key, T data)
         {
-            var jsonData = GetJsonData<T>(data, -1, false);
-            database.StringSet(key, jsonData);
+            try
+            {
+                var jsonData = GetJsonData<T>(data, -1, false);
+                database.StringSet(key, jsonData);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         /// <summary>
@@ -121,11 +154,19 @@ namespace RedisTool
         /// <param name="key"></param>
         /// <param name="data"></param>
         /// <param name="cacheTime">过期秒数</param>
-        public void Insert<T>(string key, T data, int cacheTime)
+        public bool Insert<T>(string key, T data, int cacheTime)
         {
-            var timeSpan = TimeSpan.FromSeconds(cacheTime);
-            var jsonData = GetJsonData<T>(data, cacheTime, true);
-            database.StringSet(key, jsonData, timeSpan);
+            try
+            {
+                var timeSpan = TimeSpan.FromSeconds(cacheTime);
+                var jsonData = GetJsonData<T>(data, cacheTime, true);
+                database.StringSet(key, jsonData, timeSpan);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         /// <summary>
@@ -135,12 +176,20 @@ namespace RedisTool
         /// <param name="key"></param>
         /// <param name="data"></param>
         /// <param name="cacheTime">失效时间加个随机值，防止雪崩(即大面积缓存失效)</param>
-        public void Insert<T>(string key, T data, DateTime cacheTime)
+        public bool Insert<T>(string key, T data, DateTime cacheTime)
         {
-            var timeSpan = cacheTime.AddSeconds(new Random().Next(1000)) - DateTime.Now;
-            int expireSeconds = timeSpan.Seconds;
-            var jsonData = GetJsonData<T>(data, expireSeconds, false);
-            database.StringSet(key, jsonData, timeSpan);
+            try
+            {
+                var timeSpan = cacheTime.AddSeconds(new Random().Next(1000)) - DateTime.Now;
+                int expireSeconds = timeSpan.Seconds;
+                var jsonData = GetJsonData<T>(data, expireSeconds, false);
+                database.StringSet(key, jsonData, timeSpan);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         /// <summary>
@@ -175,9 +224,17 @@ namespace RedisTool
         /// 删除Key
         /// </summary>
         /// <param name="key"></param>
-        public void Remove(string key)
+        public bool Remove(string key)
         {
-            database.KeyDelete(key, CommandFlags.None);
+            try
+            {
+                database.KeyDelete(key, CommandFlags.None);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         /// <summary>
@@ -187,6 +244,44 @@ namespace RedisTool
         {
             return database.KeyExists(key);
         }
+
+        /// <summary>
+        /// 获取分布式锁
+        /// </summary>
+        /// <param name="key">锁key</param>
+        /// <param name="lockExpirySeconds">锁自动超时时间(秒)</param>
+        /// <param name="waitLockMs">等待锁时间(秒)</param>
+        /// <returns></returns>
+        public bool Lock(string key, int lockExpirySeconds = 10, double waitLockSeconds = 0)
+        {
+            //循环间隔50毫秒
+            int waitIntervalMs = 50;
+            string lockKey = "DistributedLock:" + key;
+            DateTime begin = DateTime.Now;
+            //循环获取取锁
+            while (true)
+            {
+                if (database.StringSet(lockKey, new byte[] { 1 }, new TimeSpan(0, 0, lockExpirySeconds), When.NotExists, CommandFlags.None))
+                    return true;
+                //不等待锁直接返回
+                if (waitLockSeconds == 0) break;
+                //超过等待时间，则不再等待
+                if ((DateTime.Now - begin).TotalSeconds >= waitLockSeconds) break;
+                Thread.Sleep(waitIntervalMs);
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// 删除分布式锁
+        /// </summary>
+        /// <param name="key"></param>
+        public void DelLock(string key)
+        {
+            string lockKey = "DistributedLock:" + key;
+            database.KeyDelete(lockKey, CommandFlags.None);
+        }
+
 
     }
 }
