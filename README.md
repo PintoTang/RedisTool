@@ -54,5 +54,33 @@
         }
         return false;
     }
+    
+3.分布式锁应用
+    public string DistributedLock()
+    {
+        string msg = "";
+        try
+        {
+            //取锁,设置key10秒后失效，最大等待锁5秒
+            if (redisHelper.Lock("LockKey", 10, 5))
+            {
+                //取到锁,执行具体业务
+                //todo
+                msg = "成功";
+            }
+            else
+                msg = "未获取到锁";
+        }
+        catch
+        {
+            msg = "失败";
+        }
+        finally
+        {
+            //释放锁
+            redisHelper.DelLock("LockKey");
+        }
+        return msg;
+    }
 
 
