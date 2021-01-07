@@ -79,14 +79,14 @@ namespace Redis.Test.Controllers
                 {
                     //取到锁,执行具体业务
                     //todo
-                    msg = "success";
+                    msg = "成功";
                 }
                 else
-                    msg = "nolock";
+                    msg = "未获取到锁";
             }
             catch
             {
-                msg = "fail";
+                msg = "失败";
             }
             finally
             {
